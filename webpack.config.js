@@ -35,7 +35,7 @@ module.exports = {
     path: __dirname + '/dist',
     publicPath: '/',
     filename: 'bundle.js',
-    library: 'Header',
+    library: 'HeaderIndex',
     libraryTarget: 'umd'
   }
 };
