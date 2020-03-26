@@ -494,4 +494,148 @@ class Header {
   }
 }
 
-module.exports = Header;
+class HeaderIndex extends Header {
+
+  constructor(){
+    super({data, config, api});
+    this.isIndex = data.isIndex;
+  }
+
+  normalizeData(data){
+    var newData = super.normalizeData(data);
+
+    if (typeof data !== 'object') {
+      data = {};
+    }
+
+    newData.isIndex = false || data.isIndex;
+    return newData;
+  }
+
+  toogleIsIndex(settingsButtonElement){
+    this.isIndex = !this.isIndex;
+    if(this.isIndex){
+      settingsButtonElement.classList.add(this._CSS.settingsButtonActive);
+    }else{
+      settingsButtonElement.classList.remove(this._CSS.settingsButtonActive)
+    }
+    this.data.isIndex = this.isIndex;
+  }
+
+  renderSettings() {
+    var holder = super.renderSettings();
+    let selectTypeButton = document.createElement('SPAN');
+
+    selectTypeButton.classList.add(this._CSS.settingsButton);
+
+    /**
+     * Highlight current level button
+     */
+    if (this.isIndex) {
+      selectTypeButton.classList.add(this._CSS.settingsButtonActive);
+    }
+
+    /**
+     * Add SVG icon
+     */
+    selectTypeButton.innerHTML = require('./../assets/headerIndex.svg').default;
+
+    /**
+     * Set up click handler
+     */
+    selectTypeButton.addEventListener('click', () => {
+      this.toogleIsIndex(selectTypeButton);
+    });
+
+    /**
+     * Append settings button to holder
+     */
+    holder.appendChild(selectTypeButton);
+
+    /**
+     * Save settings buttons
+     */
+    this.settingsButtons.push(selectTypeButton);
+  }
+
+  merge(data) {
+    super.merge(data);
+    this.data.isIndex = false || this.data.isIndex;
+  }
+
+  save(toolsContent) {
+    return {
+      text: toolsContent.innerHTML,
+      level: this.currentLevel.number,
+      isIndex: this.isIndex
+    };
+  }
+
+  /**
+   * Get current Tools`s data
+   * @returns {HeaderData} Current data
+   * @private
+   */
+  get data() {
+    this._data.text = this._element.innerHTML;
+    this._data.level = this.currentLevel.number;
+    this._data.isIndex = this.isIndex;
+    return this._data;
+  }
+
+  /**
+   * Store data in plugin:
+   * - at the this._data property
+   * - at the HTML
+   *
+   * @param {HeaderData} data — data to set
+   * @private
+   */
+  set data(data) {
+    this._data = this.normalizeData(data);
+
+    /**
+     * If level is set and block in DOM
+     * then replace it to a new block
+     */
+    if (data.level !== undefined && this._element.parentNode) {
+      /**
+       * Create a new tag
+       * @type {HTMLHeadingElement}
+       */
+      let newHeader = this.getTag();
+
+      /**
+       * Save Block's content
+       */
+      newHeader.innerHTML = this._element.innerHTML;
+
+      /**
+       * Replace blocks
+       */
+      this._element.parentNode.replaceChild(newHeader, this._element);
+
+      /**
+       * Save new block to private variable
+       * @type {HTMLHeadingElement}
+       * @private
+       */
+      this._element = newHeader;
+    }
+
+    /**
+     * If data.text was passed then update block's content
+     */
+    if (data.text !== undefined) {
+      this._element.innerHTML = this._data.text || '';
+    }
+  }
+
+  onPaste(event) {
+    super.onPaste(event);
+    this.data.isIndex = false;
+  }
+
+}
+
+module.exports = HeaderIndex;
